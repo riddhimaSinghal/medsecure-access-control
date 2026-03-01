@@ -1,135 +1,246 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/dashboard.css";
 
 function AdminPanel() {
-    const navigate = useNavigate();
-    const [filter, setFilter] = useState("all");
 
-    useEffect(() => {
-        const role = localStorage.getItem("role");
-        if (role !== "admin") {
-            navigate("/unauthorized");
-        }
-    }, [navigate]);
+  const navigate = useNavigate();
 
-    const handleLogout = () => {
-        localStorage.removeItem("role");
-        localStorage.removeItem("token");
-        navigate("/");
-    };
+  /* ---------------- Data ---------------- */
 
-    const logs = JSON.parse(localStorage.getItem("logs")) || [];
+  const [users, setUsers] = useState([
+    { name: "Alice", role: "Patient" },
+    { name: "Bob", role: "Doctor" },
+    { name: "Dr. Smith", role: "Doctor" }
+  ]);
 
-    const emergencyLogs = logs.filter(log =>
-        log.action?.toLowerCase().includes("emergency")
+  const [logs, setLogs] = useState([
+    "User Alice logged in",
+    "Dr. Smith accessed patient records",
+    "Emergency access triggered"
+  ]);
+
+  const [systemStatus] = useState([
+    "Database Connected",
+    "API Running",
+    "Security Monitoring Active"
+  ]);
+
+  /* ---------------- Actions ---------------- */
+
+  const removeUser = (index) => {
+    const confirmDelete = window.confirm(
+      "Remove this user?"
     );
 
-    const filteredLogs =
-        filter === "all"
-            ? logs
-            : logs.filter(log => log.role === filter);
+    if (!confirmDelete) return;
 
-    return (
-        <div className="dashboard-page">
+    const updated = users.filter((_, i) => i !== index);
+    setUsers(updated);
+  };
 
-            <div className="dashboard-header">
-                <div>
-                    <h1>🔐 Smart Access Guardian</h1>
-                    <p>Security Operations Center</p>
-                </div>
-                <div className="role-badge">ROLE: ADMIN</div>
+  const runSecurityScan = () => {
+    setLogs([
+      "Security scan completed ✔",
+      ...logs
+    ]);
+  };
+
+  const generateReport = () => {
+    alert("Compliance report generated");
+  };
+
+  const emergencyAccess = () => {
+    alert("Emergency access logged");
+  };
+
+  const logout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
+
+  /* ---------------- UI ---------------- */
+
+  return (
+    <div style={page}>
+      <div style={container}>
+
+        <h1 style={title}>Admin Control Center</h1>
+
+        {/* System Status */}
+
+        <section style={panel}>
+          <h3>System Status</h3>
+
+          {systemStatus.map((s, i) => (
+            <div key={i} style={statusItem}>
+              {s}
             </div>
+          ))}
+        </section>
 
-            {/* System Overview */}
-            <div className="stats-row">
-                <div className="stat-card">
-                    <div className="stat-title">Total Access Events</div>
-                    <div className="stat-value">{logs.length}</div>
-                </div>
+        {/* User Management */}
 
-                <div className="stat-card">
-                    <div className="stat-title">Emergency Events</div>
-                    <div className="stat-value">{emergencyLogs.length}</div>
-                </div>
+        <section style={panel}>
+          <h3>User Management</h3>
 
-                <div className="stat-card">
-                    <div className="stat-title">Doctors Active</div>
-                    <div className="stat-value">
-                        {new Set(logs.filter(l => l.role === "doctor").map(l => l.role)).size}
-                    </div>
-                </div>
+          {users.map((u, i) => (
+            <div key={i} style={userRow}>
+              <span>
+                {u.name} — {u.role}
+              </span>
+
+              <button
+                style={dangerBtn}
+                onClick={() => removeUser(i)}
+              >
+                Remove
+              </button>
             </div>
+          ))}
+        </section>
 
-            {/* Emergency Alerts */}
-            <div className="section-card">
-                <div className="section-title">🚨 Emergency Alerts</div>
+        {/* Security Logs */}
 
-                {emergencyLogs.length === 0 ? (
-                    <p>No emergency events recorded.</p>
-                ) : (
-                    emergencyLogs.slice(-5).reverse().map((log, index) => (
-                        <div key={index} className="log-item" style={{ color: "#f87171" }}>
-                            <strong>{log.role?.toUpperCase()}</strong> — {log.action}
-                            <div style={{ fontSize: "12px", color: "#94a3b8" }}>
-                                {log.time}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
+        <section style={panel}>
+          <h3>Security Logs</h3>
 
-            {/* Log Filter */}
-            <div className="section-card">
-                <div className="section-title">Audit Log Viewer</div>
+          <button style={scanBtn} onClick={runSecurityScan}>
+            Run Security Scan
+          </button>
 
-                <div style={{ marginBottom: "15px" }}>
-                    <label style={{ marginRight: "10px" }}>Filter by role:</label>
-                    <select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        style={{
-                            padding: "6px",
-                            borderRadius: "6px",
-                            border: "none"
-                        }}
-                    >
-                        <option value="all">All</option>
-                        <option value="doctor">Doctor</option>
-                        <option value="patient">Patient</option>
-                    </select>
-                </div>
+          <div style={logBox}>
+            {logs.map((log, i) => (
+              <div key={i} style={logItem}>
+                {log}
+              </div>
+            ))}
+          </div>
+        </section>
 
-                {filteredLogs.length === 0 ? (
-                    <p>No logs available.</p>
-                ) : (
-                    filteredLogs.slice().reverse().map((log, index) => (
-                        <div key={index} className="log-item">
-                            <strong>{log.role?.toUpperCase()}</strong> — {log.action}
-                            <span
-                                className={`status-badge ${log.action.toLowerCase().includes("emergency")
-                                    ? "emergency"
-                                    : "authorized"
-                                    }`}
-                            >
-                                {log.action.toLowerCase().includes("emergency")
-                                    ? "EMERGENCY"
-                                    : "AUTHORIZED"}
-                            </span>
-                            <div style={{ fontSize: "12px", color: "#94a3b8" }}>
-                                {log.time}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
+        {/* Compliance */}
 
-            <button className="logout-btn" onClick={handleLogout}>
-                Logout
-            </button>
+        <section style={panel}>
+          <h3>Compliance</h3>
 
-        </div>
-    );
+          <button style={primaryBtn} onClick={generateReport}>
+            Generate Compliance Report
+          </button>
+        </section>
+
+        {/* Emergency */}
+
+        <section style={panel}>
+          <h3>Emergency Access</h3>
+
+          <button style={dangerBtn} onClick={emergencyAccess}>
+            Trigger Emergency Access
+          </button>
+        </section>
+
+        <button style={logoutBtn} onClick={logout}>
+          Logout
+        </button>
+
+      </div>
+    </div>
+  );
 }
+
+/* ---------------- STYLES ---------------- */
+
+const page = {
+  minHeight: "100vh",
+  background:
+    "radial-gradient(circle at top,#020617,#000000)",
+  padding: "40px",
+  display: "flex",
+  justifyContent: "center"
+};
+
+const container = {
+  width: "780px"
+};
+
+const title = {
+  textAlign: "center",
+  marginBottom: "25px",
+  fontSize: "34px",
+  color: "#22c55e"
+};
+
+const panel = {
+  background: "#0f172a",
+  border: "1px solid #1e293b",
+  padding: "20px",
+  borderRadius: "10px",
+  marginBottom: "20px",
+  boxShadow: "0 0 20px rgba(0,255,170,0.1)"
+};
+
+const statusItem = {
+  padding: "8px",
+  marginTop: "6px",
+  background: "#020617",
+  borderRadius: "6px",
+  border: "1px solid #1e293b"
+};
+
+const userRow = {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "8px",
+  background: "#020617",
+  borderRadius: "6px",
+  marginTop: "8px"
+};
+
+const logBox = {
+  marginTop: "10px",
+  maxHeight: "160px",
+  overflowY: "auto"
+};
+
+const logItem = {
+  padding: "6px",
+  borderBottom: "1px solid #1e293b"
+};
+
+const primaryBtn = {
+  padding: "8px 14px",
+  background: "#22c55e",
+  border: "none",
+  borderRadius: "6px",
+  color: "white",
+  cursor: "pointer"
+};
+
+const scanBtn = {
+  padding: "8px 14px",
+  background: "#38bdf8",
+  border: "none",
+  borderRadius: "6px",
+  color: "white",
+  cursor: "pointer",
+  marginBottom: "10px"
+};
+
+const dangerBtn = {
+  padding: "6px 12px",
+  background: "#ef4444",
+  border: "none",
+  borderRadius: "6px",
+  color: "white",
+  cursor: "pointer"
+};
+
+const logoutBtn = {
+  width: "100%",
+  padding: "12px",
+  background: "#1e293b",
+  border: "none",
+  borderRadius: "8px",
+  marginTop: "10px",
+  color: "white"
+};
 
 export default AdminPanel;

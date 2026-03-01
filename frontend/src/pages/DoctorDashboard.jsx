@@ -1,216 +1,330 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/dashboard.css";
-import { getPatientRecords, triggerEmergency } from "../services/api";
 
 function DoctorDashboard() {
-    const navigate = useNavigate();
 
-    const [patients, setPatients] = useState([]);
-    const [selectedPatient, setSelectedPatient] = useState(null);
-    const [notes, setNotes] = useState("");
-    const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-    // ✅ Declare FIRST
-    const logActivity = (action) => {
-        const logs = JSON.parse(localStorage.getItem("logs")) || [];
-        logs.push({
-            role: "doctor",
-            action,
-            time: new Date().toLocaleString()
-        });
-        localStorage.setItem("logs", JSON.stringify(logs));
-    };
+  /* ---------------- Patients ---------------- */
 
-    useEffect(() => {
-        const role = localStorage.getItem("role");
+  const patients = [
+    {
+      name: "Alice",
+      diagnostics: ["MRI – Normal", "Blood Test – Normal"],
+      prescriptions: ["Paracetamol", "Vitamin D"],
+      treatment: "Rest for 5 days"
+    },
+    {
+      name: "Bob",
+      diagnostics: ["X-Ray – Minor issue"],
+      prescriptions: ["Ibuprofen"],
+      treatment: "Physiotherapy"
+    }
+  ];
 
-        if (role !== "doctor") {
-            navigate("/unauthorized");
-            return;
-        }
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
-        const loadPatients = async () => {
-            try {
-                const res = await getPatientRecords();
-                const data = res.data.data;
+  /* ---------------- Appointments ---------------- */
 
-                if (typeof data === "string") {
-                    const mockPatients = [
-                        {
-                            id: 1,
-                            name: "John Smith",
-                            age: 42,
-                            bloodGroup: "O+",
-                            diagnosis: "Hypertension",
-                            lastVisit: "Jan 15, 2026"
-                        }
-                    ];
-                    setPatients(mockPatients);
-                    setSelectedPatient(mockPatients[0]);
-                } else {
-                    setPatients(data);
-                    setSelectedPatient(data[0]);
-                }
+  const [appointments] = useState([
+    { patient: "Alice", date: "2026-03-05", slot: "10:00 AM" },
+    { patient: "Bob", date: "2026-03-06", slot: "02:00 PM" }
+  ]);
 
-                logActivity("Viewed patient records");
+  /* ---------------- Queries ---------------- */
 
-            } catch (err) {
-                setError(err?.response?.data || "Access denied");
-            }
-        };
+  const [queries, setQueries] = useState([
+    {
+      patient: "Alice",
+      question: "Can I take medicine after food?",
+      replies: []
+    }
+  ]);
 
-        loadPatients();
+  const [replyText, setReplyText] = useState("");
+  const [activeQuery, setActiveQuery] = useState(null);
 
-    }, [navigate]);
+  /* ---------------- Treatment ---------------- */
 
-    const handleEmergency = async () => {
-        const confirmAction = window.confirm(
-            "⚠️ Emergency access will be logged and flagged. Continue?"
-        );
+  const [treatmentNote, setTreatmentNote] = useState("");
+  const [medicine, setMedicine] = useState("");
+  const [dosage, setDosage] = useState("");
 
-        if (!confirmAction) return;
+  /* ---------------- Actions ---------------- */
 
-        try {
-            await triggerEmergency();
-            logActivity("EMERGENCY ACCESS TRIGGERED");
-            alert("🚨 Emergency Access Logged");
-        } catch (err) {
-            alert(err?.response?.data || "Emergency request failed");
-        }
-    };
+  const logout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
 
-    const handleSaveNotes = () => {
-        if (!notes.trim()) return;
+  const updateTreatment = () => {
+    if (!treatmentNote) return;
+    alert("Treatment updated");
+    setTreatmentNote("");
+  };
 
-        logActivity(`Added notes for ${selectedPatient.name}`);
-        alert("Notes saved successfully");
-        setNotes("");
-    };
+  const addPrescription = () => {
+    if (!medicine || !dosage) return;
+    alert("Prescription added");
+    setMedicine("");
+    setDosage("");
+  };
 
-    const logs = JSON.parse(localStorage.getItem("logs")) || [];
+  const sendReply = (index) => {
+    if (!replyText) return;
 
-    return (
-        <div className="dashboard-page">
+    const updated = [...queries];
+    updated[index].replies.push(replyText);
 
-            <div className="dashboard-header">
-                <div>
-                    <h1>🔐 Smart Access Guardian</h1>
-                    <p>Doctor Workstation</p>
-                </div>
-                <div className="role-badge">ROLE: DOCTOR</div>
+    setQueries(updated);
+    setReplyText("");
+  };
+
+  return (
+    <div style={page}>
+      <div style={container}>
+
+        <h1 style={title}>Doctor Portal</h1>
+
+        {/* Appointments */}
+
+        <section style={card}>
+          <h3 style={sectionTitle}>Upcoming Appointments</h3>
+
+          {appointments.map((a, i) => (
+            <div key={i} style={listItem}>
+              <b>{a.patient}</b>
+              <br />
+              {a.date} • {a.slot}
             </div>
+          ))}
+        </section>
 
-            <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: "20px" }}>
+        {/* Queries */}
 
-                {/* Patient List */}
-                <div className="section-card">
-                    <div className="section-title">Patients</div>
+        <section style={card}>
+          <h3 style={sectionTitle}>Patient Queries</h3>
 
-                    {patients.map((patient) => (
-                        <div
-                            key={patient.id}
-                            onClick={() => setSelectedPatient(patient)}
-                            style={{
-                                padding: "10px",
-                                cursor: "pointer",
-                                background:
-                                    selectedPatient?.id === patient.id ? "#334155" : "transparent",
-                                borderRadius: "8px",
-                                marginBottom: "8px"
-                            }}
-                        >
-                            {patient.name}
-                        </div>
-                    ))}
-                </div>
+          {queries.map((q, i) => (
+            <div key={i} style={queryCard}>
 
-                {/* Patient Record */}
-                <div className="section-card">
-                    {error && <p style={{ color: "red" }}>{error}</p>}
+              <div>
+                <b>{q.patient}</b>
+                <br />
+                {q.question}
 
-                    {selectedPatient && (
-                        <>
-                            <div className="section-title">Patient Record</div>
+                {/* Replies */}
 
-                            <p><strong>Name:</strong> {selectedPatient.name}</p>
-                            <p><strong>Age:</strong> {selectedPatient.age}</p>
-                            <p><strong>Blood Group:</strong> {selectedPatient.bloodGroup}</p>
-                            <p><strong>Diagnosis:</strong> {selectedPatient.diagnosis}</p>
-                            <p><strong>Last Visit:</strong> {selectedPatient.lastVisit}</p>
-
-                            <hr style={{ margin: "20px 0" }} />
-
-                            <div className="section-title">Doctor Notes</div>
-
-                            <textarea
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Write clinical observations..."
-                                style={{
-                                    width: "100%",
-                                    minHeight: "100px",
-                                    padding: "10px",
-                                    borderRadius: "8px",
-                                    border: "none",
-                                    marginBottom: "10px"
-                                }}
-                            />
-
-                            <button
-                                onClick={handleSaveNotes}
-                                style={{
-                                    padding: "8px 16px",
-                                    backgroundColor: "#3b82f6",
-                                    border: "none",
-                                    borderRadius: "8px",
-                                    color: "white",
-                                    cursor: "pointer"
-                                }}
-                            >
-                                Save Notes
-                            </button>
-                        </>
-                    )}
-                </div>
-
-            </div>
-
-            {/* Recent Activity */}
-            <div className="section-card" style={{ marginTop: "30px" }}>
-                <div className="section-title">Recent Activity</div>
-
-                {logs.slice(-5).reverse().map((log, index) => (
-                    <div key={index} className="log-item">
-                        {log.action}
-                        <div style={{ fontSize: "12px", color: "#94a3b8" }}>
-                            {log.time}
-                        </div>
-                    </div>
+                {q.replies.map((r, index) => (
+                  <div key={index} style={replyBox}>
+                    Doctor: {r}
+                  </div>
                 ))}
-            </div>
+              </div>
 
-            {/* Emergency Section */}
-            <div className="section-card">
-                <div className="section-title">Emergency Override</div>
+              <div style={{ marginTop: 10 }}>
+
+                <input
+                  placeholder="Write reply"
+                  value={activeQuery === i ? replyText : ""}
+                  onFocus={() => setActiveQuery(i)}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  style={input}
+                />
 
                 <button
-                    onClick={handleEmergency}
-                    style={{
-                        backgroundColor: "#dc2626",
-                        color: "white",
-                        padding: "10px 20px",
-                        border: "none",
-                        borderRadius: "8px",
-                        cursor: "pointer"
-                    }}
+                  style={primaryBtn}
+                  onClick={() => sendReply(i)}
                 >
-                    Trigger Emergency Access
+                  Send Reply
                 </button>
-            </div>
 
-        </div>
-    );
+              </div>
+
+            </div>
+          ))}
+        </section>
+
+        {/* Patient Records */}
+
+        <section style={card}>
+          <h3 style={sectionTitle}>Patient Records</h3>
+
+          <select
+            style={input}
+            onChange={(e) =>
+              setSelectedPatient(
+                patients.find(
+                  (p) => p.name === e.target.value
+                )
+              )
+            }
+          >
+            <option>Select Patient</option>
+
+            {patients.map((p, i) => (
+              <option key={i}>{p.name}</option>
+            ))}
+          </select>
+
+          {selectedPatient && (
+            <div style={{ marginTop: 15 }}>
+
+              <h4>{selectedPatient.name}</h4>
+
+              <h5>Diagnostics</h5>
+              {selectedPatient.diagnostics.map((d, i) => (
+                <div key={i} style={listItem}>{d}</div>
+              ))}
+
+              <h5>Prescriptions</h5>
+              {selectedPatient.prescriptions.map((p, i) => (
+                <div key={i} style={listItem}>{p}</div>
+              ))}
+
+              <h5>Treatment Plan</h5>
+              <div style={listItem}>
+                {selectedPatient.treatment}
+              </div>
+
+              {/* Update Treatment */}
+
+              <input
+                placeholder="Update treatment"
+                value={treatmentNote}
+                onChange={(e) =>
+                  setTreatmentNote(e.target.value)
+                }
+                style={input}
+              />
+
+              <button style={primaryBtn} onClick={updateTreatment}>
+                Save
+              </button>
+
+              {/* Add Prescription */}
+
+              <input
+                placeholder="Medicine"
+                value={medicine}
+                onChange={(e) => setMedicine(e.target.value)}
+                style={input}
+              />
+
+              <input
+                placeholder="Dosage"
+                value={dosage}
+                onChange={(e) => setDosage(e.target.value)}
+                style={input}
+              />
+
+              <button style={secondaryBtn} onClick={addPrescription}>
+                Add Prescription
+              </button>
+
+            </div>
+          )}
+        </section>
+
+        <button style={logoutBtn} onClick={logout}>
+          Logout
+        </button>
+
+      </div>
+    </div>
+  );
 }
+
+/* ---------------- Styles ---------------- */
+
+const page = {
+  minHeight: "100vh",
+  background: "linear-gradient(135deg,#020617,#1e293b,#0f172a)",
+  padding: "40px",
+  display: "flex",
+  justifyContent: "center"
+};
+
+const container = {
+  width: "720px"
+};
+
+const title = {
+  textAlign: "center",
+  marginBottom: "25px",
+  fontSize: "32px"
+};
+
+const card = {
+  background: "rgba(40,40,60,0.9)",
+  padding: "20px",
+  borderRadius: "12px",
+  marginBottom: "20px",
+  boxShadow: "0 8px 30px rgba(0,0,0,0.5)"
+};
+
+const sectionTitle = {
+  marginBottom: "10px"
+};
+
+const input = {
+  width: "100%",
+  padding: "10px",
+  marginTop: "8px",
+  marginBottom: "8px",
+  borderRadius: "8px",
+  border: "none",
+  background: "#1f1f2e",
+  color: "white"
+};
+
+const listItem = {
+  background: "#1f1f2e",
+  padding: "10px",
+  borderRadius: "8px",
+  marginTop: "6px"
+};
+
+const queryCard = {
+  background: "#1f1f2e",
+  padding: "12px",
+  borderRadius: "8px",
+  marginTop: "8px"
+};
+
+const replyBox = {
+  marginTop: "6px",
+  padding: "6px",
+  background: "#111827",
+  borderRadius: "6px"
+};
+
+const primaryBtn = {
+  padding: "8px 14px",
+  background: "#6366f1",
+  border: "none",
+  borderRadius: "8px",
+  color: "white",
+  cursor: "pointer"
+};
+
+const secondaryBtn = {
+  padding: "8px 14px",
+  background: "#10b981",
+  border: "none",
+  borderRadius: "8px",
+  color: "white",
+  cursor: "pointer"
+};
+
+const logoutBtn = {
+  width: "100%",
+  padding: "12px",
+  background: "#374151",
+  border: "none",
+  borderRadius: "8px",
+  marginTop: "10px",
+  color: "white"
+};
 
 export default DoctorDashboard;
