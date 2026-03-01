@@ -1,0 +1,21 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #1e1e2f, #121212);
+  color: white;
+}
+
+button {
+  border-radius: 8px;
+  border: none;
+  transition: 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+table tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
