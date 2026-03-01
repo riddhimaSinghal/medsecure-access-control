@@ -1,6 +1,6 @@
-# Smart Access Guardian
+# MedSecure Access Control
 
-Smart Access Guardian is a role-based healthcare access management system designed to demonstrate secure data access, user authentication, and role-specific dashboards. The platform allows patients, doctors, and administrators to interact with a centralized medical system while maintaining controlled access to sensitive information.
+MedSecure Access Control is a role-based healthcare access management system designed to demonstrate secure data access, user authentication, and role-specific dashboards. The platform allows patients, doctors, and administrators to interact with a centralized medical system while maintaining controlled access to sensitive information.
 
 The application consists of a React frontend deployed on Vercel and a Node.js/Express backend deployed on Render, connected to a MongoDB Atlas database.
 
