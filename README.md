@@ -4,7 +4,7 @@ Smart Access Guardian is a role-based healthcare access management system design
 
 The application consists of a React frontend deployed on Vercel and a Node.js/Express backend deployed on Render, connected to a MongoDB Atlas database.
 
-###Live Link: https://medsecure-access-control.vercel.app/
+### Live Link: https://medsecure-access-control.vercel.app/
 ---
 
 ## Project Architecture
