@@ -27,7 +27,7 @@ function Signup() {
     return (
         <div style={pageStyle}>
             <div style={cardStyle}>
-                <h1>🔐 Smart Access Guardian</h1>
+                <h1>🔐 MedSecure Access Control</h1>
                 <h2>Sign Up</h2>
 
                 <form onSubmit={handleSignup}>
