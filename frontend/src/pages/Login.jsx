@@ -34,7 +34,7 @@ function Login() {
     return (
         <div style={pageStyle}>
             <div style={cardStyle}>
-                <h1>🔐 Smart Access Guardian</h1>
+                <h1>🔐 MedSecure Access Control</h1>
                 <h2>Login</h2>
 
                 <form onSubmit={handleLogin}>
